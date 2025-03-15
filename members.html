@@ -9,13 +9,13 @@
         table { width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #ffe0b2; }
         th, td { border: 1px solid black; padding: 8px; text-align: center; }
         th { background-color: #ffcc80; }
-        button { background-color: #ff9800; color: white; border: none; padding: 8px 12px; cursor: pointer; }
+        button { background-color: #ff9800; color: white; border: none; padding: 8px 12px; cursor: pointer; margin: 2px; }
         button:hover { background-color: #e68900; }
         input { padding: 8px; margin: 5px; border: 1px solid #ff9800; }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+        import { getDatabase, ref, set, get, remove, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAB4wO937rCwc0OTWeJlGgoaxErWOdjaJM",
@@ -29,6 +29,8 @@
         
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let isEditing = false;
+        let currentUser = "";
 
         document.getElementById('workerForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -39,14 +41,23 @@
             let phone = document.getElementById('phone').value;
             
             const workerRef = ref(db, 'workers/' + user);
-            set(workerRef, {
-                user, email, pass, browser, phone
-            }).then(() => {
-                console.log("تمت إضافة العامل بنجاح");
-                displayWorkers();
-            }).catch((error) => {
-                console.error("خطأ في حفظ البيانات: ", error);
-            });
+            if (isEditing) {
+                update(workerRef, { email, pass, browser, phone }).then(() => {
+                    console.log("تم تحديث العامل بنجاح");
+                    isEditing = false;
+                    document.getElementById('submitButton').innerText = 'إضافة';
+                    displayWorkers();
+                }).catch((error) => {
+                    console.error("خطأ في تحديث البيانات: ", error);
+                });
+            } else {
+                set(workerRef, { user, email, pass, browser, phone }).then(() => {
+                    console.log("تمت إضافة العامل بنجاح");
+                    displayWorkers();
+                }).catch((error) => {
+                    console.error("خطأ في حفظ البيانات: ", error);
+                });
+            }
             this.reset();
         });
 
@@ -57,7 +68,6 @@
                     let tableBody = document.getElementById('workerTableBody');
                     tableBody.innerHTML = '';
                     let workers = snapshot.val();
-                    console.log("عرض العمال: ", workers);
                     Object.keys(workers).forEach(key => {
                         let worker = workers[key];
                         let row = `<tr>
@@ -66,7 +76,10 @@
                             <td>${worker.pass}</td>
                             <td>${worker.browser}</td>
                             <td>${worker.phone}</td>
-                            <td><button onclick="deleteWorker('${worker.user}')">حذف</button></td>
+                            <td>
+                                <button onclick="editWorker('${worker.user}', '${worker.email}', '${worker.pass}', '${worker.browser}', '${worker.phone}')">تعديل</button>
+                                <button onclick="deleteWorker('${worker.user}')">حذف</button>
+                            </td>
                         </tr>`;
                         tableBody.innerHTML += row;
                     });
@@ -88,6 +101,18 @@
             });
         }
 
+        window.editWorker = function(user, email, pass, browser, phone) {
+            document.getElementById('user').value = user;
+            document.getElementById('email').value = email;
+            document.getElementById('pass').value = pass;
+            document.getElementById('browser').value = browser;
+            document.getElementById('phone').value = phone;
+            document.getElementById('user').readOnly = true;
+            document.getElementById('submitButton').innerText = 'تحديث';
+            isEditing = true;
+            currentUser = user;
+        }
+
         document.addEventListener('DOMContentLoaded', displayWorkers);
     </script>
 </head>
@@ -99,7 +124,7 @@
         <input type="text" id="pass" placeholder="كلمة المرور" required>
         <input type="text" id="browser" placeholder="المتصفح" required>
         <input type="tel" id="phone" placeholder="رقم الهاتف" required>
-        <button type="submit">إضافة</button>
+        <button type="submit" id="submitButton">إضافة</button>
     </form>
 
     <h2>جدول العمال</h2>
@@ -111,7 +136,7 @@
                 <th>كلمة المرور</th>
                 <th>المتصفح</th>
                 <th>رقم الهاتف</th>
-                <th>حذف</th>
+                <th>إجراءات</th>
             </tr>
         </thead>
         <tbody id="workerTableBody"></tbody>
