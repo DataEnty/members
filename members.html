@@ -12,6 +12,8 @@
         button { background-color: #ff9800; color: white; border: none; padding: 8px 12px; cursor: pointer; margin: 2px; }
         button:hover { background-color: #e68900; }
         input { padding: 8px; margin: 5px; border: 1px solid #ff9800; }
+        .nav { margin: 20px; }
+        .nav a { margin: 10px; text-decoration: none; color: #ff9800; font-weight: bold; }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
@@ -117,6 +119,11 @@
     </script>
 </head>
 <body>
+    <div class="nav">
+        <a href="https://dataenty.github.io/main/main.html">الصفحة الرئيسية</a>
+        <a href="https://dataenty.github.io/Data/entry.html">إدارة البيانات</a>
+        <a href="https://dataenty.github.io/users/users.html">المستخدمين</a>
+    </div>
     <h2>إضافة عامل</h2>
     <form id="workerForm">
         <input type="text" id="user" placeholder="الاسم" required>
