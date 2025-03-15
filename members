@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة العمال</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; text-align: center; background-color: #fff3e0; }
+        table { width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #ffe0b2; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        th { background-color: #ffcc80; }
+        button { background-color: #ff9800; color: white; border: none; padding: 8px 12px; cursor: pointer; }
+        button:hover { background-color: #e68900; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ff9800; }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAB4wO937rCwc0OTWeJlGgoaxErWOdjaJM",
+            authDomain: "my-new-a6e9f.firebaseapp.com",
+            databaseURL: "https://my-new-a6e9f-default-rtdb.firebaseio.com",
+            projectId: "my-new-a6e9f",
+            storageBucket: "my-new-a6e9f.firebasestorage.app",
+            messagingSenderId: "1034729064842",
+            appId: "1:1034729064842:web:5b3d42fe7b5c0f3a3ae073"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.getElementById('workerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let user = document.getElementById('user').value;
+            let email = document.getElementById('email').value;
+            let pass = document.getElementById('pass').value;
+            let browser = document.getElementById('browser').value;
+            let phone = document.getElementById('phone').value;
+            
+            const workerRef = ref(db, 'workers/' + user);
+            set(workerRef, {
+                user, email, pass, browser, phone
+            }).then(() => {
+                console.log("تمت إضافة العامل بنجاح");
+                displayWorkers();
+            }).catch((error) => {
+                console.error("خطأ في حفظ البيانات: ", error);
+            });
+            this.reset();
+        });
+
+        function displayWorkers() {
+            const workersRef = ref(db, 'workers');
+            get(workersRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    let tableBody = document.getElementById('workerTableBody');
+                    tableBody.innerHTML = '';
+                    let workers = snapshot.val();
+                    console.log("عرض العمال: ", workers);
+                    Object.keys(workers).forEach(key => {
+                        let worker = workers[key];
+                        let row = `<tr>
+                            <td>${worker.user}</td>
+                            <td>${worker.email}</td>
+                            <td>${worker.pass}</td>
+                            <td>${worker.browser}</td>
+                            <td>${worker.phone}</td>
+                            <td><button onclick="deleteWorker('${worker.user}')">حذف</button></td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                } else {
+                    console.log("لا توجد بيانات محفوظة في Firebase");
+                }
+            }).catch((error) => {
+                console.error("خطأ في جلب البيانات: ", error);
+            });
+        }
+
+        window.deleteWorker = function(user) {
+            const workerRef = ref(db, 'workers/' + user);
+            remove(workerRef).then(() => {
+                console.log("تم حذف العامل");
+                displayWorkers();
+            }).catch((error) => {
+                console.error("خطأ في حذف البيانات: ", error);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', displayWorkers);
+    </script>
+</head>
+<body>
+    <h2>إضافة عامل</h2>
+    <form id="workerForm">
+        <input type="text" id="user" placeholder="الاسم" required>
+        <input type="text" id="email" placeholder="البريد الإلكتروني">
+        <input type="text" id="pass" placeholder="كلمة المرور" required>
+        <input type="text" id="browser" placeholder="المتصفح" required>
+        <input type="tel" id="phone" placeholder="رقم الهاتف" required>
+        <button type="submit">إضافة</button>
+    </form>
+
+    <h2>جدول العمال</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>كلمة المرور</th>
+                <th>المتصفح</th>
+                <th>رقم الهاتف</th>
+                <th>حذف</th>
+            </tr>
+        </thead>
+        <tbody id="workerTableBody"></tbody>
+    </table>
+</body>
+</html>
